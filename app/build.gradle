@@ -22,19 +22,29 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    aaptOptions {
+        noCompress "tflite"  // Prevent TensorFlow Lite model file compression
+    }
 }
 
 dependencies {
-
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
-    implementation libs.tensorflow.lite
+
+    // Add TensorFlow Lite dependency
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.5.0'
+    implementation 'com.google.code.gson:gson:2.8.9' // Or the latest version
+
+
     implementation libs.play.services.maps
 
     testImplementation libs.junit
