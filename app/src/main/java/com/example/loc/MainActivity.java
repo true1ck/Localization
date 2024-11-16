@@ -8,6 +8,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,12 +36,13 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_LOCATION_PERMISSION = 1;
-    private static final String API_URL = "https://mllocalizationmodel-1.onrender.com/predict"; // Replace with actual API URL
+    private static final String API_URL = "https://mllocalizationmodel-1.onrender.com/predict";
 
     private WifiManager wifiManager;
     private Spinner spinnerHotspot1, spinnerHotspot2, spinnerHotspot3;
     private TextView tvSignalStrength1, tvSignalStrength2, tvSignalStrength3, tvStatus;
     private Button btnStart;
+    private GridLayout gridLayout;
 
     private final OkHttpClient client = new OkHttpClient();
 
@@ -77,6 +79,25 @@ public class MainActivity extends AppCompatActivity {
         tvStatus = findViewById(R.id.tvStatus);
 
         btnStart = findViewById(R.id.btnStart);
+
+        gridLayout = findViewById(R.id.gridLayout);
+        initializeGrid();
+    }
+
+    private void initializeGrid() {
+        gridLayout.setColumnCount(3);
+        gridLayout.setRowCount(3);
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                TextView cell = new TextView(this);
+                cell.setText(String.format("a%d%d", row + 1, col + 1));
+                cell.setGravity(android.view.Gravity.CENTER);
+                cell.setPadding(16, 16, 16, 16);
+                cell.setBackgroundResource(android.R.drawable.btn_default);
+                gridLayout.addView(cell);
+            }
+        }
     }
 
     private boolean hasLocationPermission() {
@@ -102,16 +123,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         wifiManager.startScan();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
         List<ScanResult> results = wifiManager.getScanResults();
         List<String> hotspotList = new ArrayList<>();
 
@@ -151,16 +162,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         wifiManager.startScan();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
         List<ScanResult> results = wifiManager.getScanResults();
 
         int strength1 = getSignalStrength(hotspot1, results);
@@ -219,12 +220,31 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful()) {
                     String responseBody = response.body().string();
-                    runOnUiThread(() -> tvStatus.setText("API Response: " + responseBody));
+                    runOnUiThread(() -> handleApiResponse(responseBody));
                 } else {
                     runOnUiThread(() -> tvStatus.setText("API call failed with code: " + response.code()));
                 }
             }
         });
+    }
+
+    private void handleApiResponse(String responseBody) {
+        tvStatus.setText("API Response: " + responseBody);
+        if (responseBody.contains("predicted_class")) {
+            String predictedClass = responseBody.split(":")[1].replaceAll("[^a-zA-Z0-9]", "");
+            highlightPredictedSpot(predictedClass);
+        }
+    }
+
+    private void highlightPredictedSpot(String predictedClass) {
+        for (int i = 0; i < gridLayout.getChildCount(); i++) {
+            TextView cell = (TextView) gridLayout.getChildAt(i);
+            if (cell.getText().toString().equals(predictedClass)) {
+                cell.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
+            } else {
+                cell.setBackgroundResource(android.R.drawable.btn_default);
+            }
+        }
     }
 
     @Override
@@ -234,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 loadHotspotData();
             } else {
-                Toast.makeText(this, "Permission denied. Unable to scan Wi-Fi networks.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Permission denied. Unable to scan Wi-Fi.", Toast.LENGTH_SHORT).show();
             }
         }
     }
