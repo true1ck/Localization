@@ -8,7 +8,6 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.GridLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spinnerHotspot1, spinnerHotspot2, spinnerHotspot3;
     private TextView tvSignalStrength1, tvSignalStrength2, tvSignalStrength3, tvStatus;
     private Button btnStart;
-    private GridLayout gridLayout;
+    private GridImageView gridImageView;
 
     private final OkHttpClient client = new OkHttpClient();
 
@@ -51,20 +50,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize UI components
         initUI();
 
-        // Initialize WifiManager
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
-        // Request location permission if not granted
         if (!hasLocationPermission()) {
             requestLocationPermission();
         } else {
             loadHotspotData();
         }
 
-        // Button click listener for signal collection
         btnStart.setOnClickListener(v -> startSignalCollection());
     }
 
@@ -79,25 +74,7 @@ public class MainActivity extends AppCompatActivity {
         tvStatus = findViewById(R.id.tvStatus);
 
         btnStart = findViewById(R.id.btnStart);
-
-        gridLayout = findViewById(R.id.gridLayout);
-        initializeGrid();
-    }
-
-    private void initializeGrid() {
-        gridLayout.setColumnCount(3);
-        gridLayout.setRowCount(3);
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                TextView cell = new TextView(this);
-                cell.setText(String.format("a%d%d", row + 1, col + 1));
-                cell.setGravity(android.view.Gravity.CENTER);
-                cell.setPadding(16, 16, 16, 16);
-                cell.setBackgroundResource(android.R.drawable.btn_default);
-                gridLayout.addView(cell);
-            }
-        }
+        gridImageView = findViewById(R.id.gridImageView);
     }
 
     private boolean hasLocationPermission() {
@@ -232,18 +209,7 @@ public class MainActivity extends AppCompatActivity {
         tvStatus.setText("API Response: " + responseBody);
         if (responseBody.contains("predicted_class")) {
             String predictedClass = responseBody.split(":")[1].replaceAll("[^a-zA-Z0-9]", "");
-            highlightPredictedSpot(predictedClass);
-        }
-    }
-
-    private void highlightPredictedSpot(String predictedClass) {
-        for (int i = 0; i < gridLayout.getChildCount(); i++) {
-            TextView cell = (TextView) gridLayout.getChildAt(i);
-            if (cell.getText().toString().equals(predictedClass)) {
-                cell.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
-            } else {
-                cell.setBackgroundResource(android.R.drawable.btn_default);
-            }
+            gridImageView.highlightCell(predictedClass);
         }
     }
 

@@ -42,7 +42,8 @@ dependencies {
     // Add TensorFlow Lite dependency
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'org.tensorflow:tensorflow-lite:2.5.0'
-    implementation 'com.google.code.gson:gson:2.8.9' // Or the latest version
+    implementation 'com.google.code.gson:gson:2.10'
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
 
 
     implementation libs.play.services.maps
